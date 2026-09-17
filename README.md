@@ -1,6 +1,6 @@
 # Torque Data Field for the Garmin 1030Plus
 ### Introduction
-This IQ data field displays the torque value on your Garmin 1030Plus. All data field sizes are supported.
+This IQ data field displays the torque value on your Garmin 1030Plus. All data field sizes are supported. Of course you need a power meter installed.
 
 By default the data field displays the average of the last 3 values to get a more stable display. You can change this number via you mobile phone or in Garmin Express.
 
