@@ -178,8 +178,8 @@ class TorqueView extends WatchUi.DataField
     // guarantee that compute() will be called before onUpdate().
     function compute(info as Activity.Info) as Void
     {
-        simulateData();
-        return;
+        //simulateData();
+        //return;
 
         if (info has :currentCadence 
             && info has :currentPower
