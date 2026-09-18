@@ -4,72 +4,72 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Application;
 
-class FontInfo
+// The class adds some more infos about a font and precalculates some values
+
+class FontDescriptor
 {
     public var Font as FontType;
-    public var WinAscent as Number;
+    // the height including all spaces above and below the printable height
+    public var Height as Number;
+    // the empty space above each uppercase char
+    public var Ascent as Number;
+    // space below the baseline
     public var Descent as Number;
+    // the space above each lowercase char
     public var XHeight as Number;
+    public var UppercaseHeight as Number;
+    public var LowercaseHeight as Number;
 
-    function initialize(font as FontType, winAscent as Number, xHeight as Number, descent as Number)
+    function initialize(font as FontType, ascent as Number, xHeight as Number)
     {
-        self.Font = font;
-        self.WinAscent = winAscent;
-        self.Descent = descent;
-        self.XHeight = xHeight;
+        Font = font;
+        Ascent = ascent;
+        Descent = Graphics.getFontDescent(font);
+        XHeight = xHeight;
+        Height = Graphics.getFontHeight(font);
+        UppercaseHeight = Height - Ascent - Descent;
+        LowercaseHeight = Height - XHeight - Descent;
     }
 }
 
+// The main purpose of this class is to buffer the with of the value, so that
+// the expensive call to getTextWidthInPixels isn't called each time in onUpdate()
+
 class ValueInfo
 {
-    public var FontInfos as FontInfo;
+    public var FontInfo as FontDescriptor;
     public var Value as String;
     public var Width as Number;
-    public var Height as Number;
 
-    function initialize(fontInfo as FontInfo)
+    function initialize(FontDescriptor as FontDescriptor)
     {
         Value = "";
-        self.FontInfos = fontInfo;
-        self.Width = 0;
-        Height = 0;
+        FontInfo = FontDescriptor;
+        Width = 0;
     }
 
-    function setFontInfo(fontInfo as FontInfo, dc as Dc) as Void
+    function setFontInfo(FontDescriptor as FontDescriptor, dc as Dc) as Void
     {
-        FontInfos = fontInfo;    
-        var dim = dc.getTextDimensions(Value, FontInfos.Font);
-        Width = dim[0];
-        Height = dim[1];
+        FontInfo = FontDescriptor;    
+        Width = dc.getTextWidthInPixels(Value, FontInfo.Font);
     }
     
     function setValue(value as String) as Void
     {
         Value = value;
         Width = 0;
-        Height = 0;
     }
 
     function calcDimensions(dc as Dc)
     {
         if (Width == 0)
         {
-            var dim = dc.getTextDimensions(Value, FontInfos.Font);
-            Width = dim[0];
-            Height = dim[1];
+            Width = dc.getTextWidthInPixels(Value, FontInfo.Font);
         }
     }
-
-    function getUppercaseHeight() as Number
-    {
-        return Height - FontInfos.WinAscent - FontInfos.Descent;
-    }
-
-    function getLowercaseHeight() as Number
-    {
-        return Height - FontInfos.XHeight - FontInfos.Descent;
-    }
 }
+
+// The DataField implementation
 
 class TorqueView extends WatchUi.DataField
 {
@@ -91,18 +91,18 @@ class TorqueView extends WatchUi.DataField
     private const  UNIT_FONT_MEDIUM = 1001;
     private const  UNIT_FONT_LARGE = 1002;
 
-    // the missing 3 font metric values for each font are determined experimentally
-    hidden var FontInfos =
+    // the missing 2 font metric values for each font are determined experimentally
+    hidden var FontInfo =
     {
-        Graphics.FONT_XTINY => new FontInfo(Graphics.FONT_SYSTEM_XTINY, 5, 7, 3),
-        Graphics.FONT_TINY => new FontInfo(Graphics.FONT_SYSTEM_TINY, 5, 8, 5),
-        Graphics.FONT_SMALL => new FontInfo(Graphics.FONT_SMALL, 6, 10, 5),
-        Graphics.FONT_MEDIUM => new FontInfo(Graphics.FONT_MEDIUM, 7, 11, 6),
-        Graphics.FONT_LARGE => new FontInfo(Graphics.FONT_LARGE, 10, 17, 10),
-        Graphics.FONT_SYSTEM_NUMBER_MILD => new FontInfo(Graphics.FONT_SYSTEM_NUMBER_MILD, 0, 0, 0),
-        Graphics.FONT_SYSTEM_NUMBER_MEDIUM => new FontInfo(Graphics.FONT_SYSTEM_NUMBER_MEDIUM, 2, 0, 12),
-        Graphics.FONT_SYSTEM_NUMBER_HOT => new FontInfo(Graphics.FONT_SYSTEM_NUMBER_HOT, 2, 0, 17),
-        Graphics.FONT_SYSTEM_NUMBER_THAI_HOT => new FontInfo(Graphics.FONT_SYSTEM_NUMBER_THAI_HOT, 4, 0, 20),
+        Graphics.FONT_XTINY => new FontDescriptor(Graphics.FONT_SYSTEM_XTINY, 5, 7),
+        Graphics.FONT_TINY => new FontDescriptor(Graphics.FONT_SYSTEM_TINY, 5, 8),
+        Graphics.FONT_SMALL => new FontDescriptor(Graphics.FONT_SMALL, 6, 10),
+        Graphics.FONT_MEDIUM => new FontDescriptor(Graphics.FONT_MEDIUM, 7, 11),
+        Graphics.FONT_LARGE => new FontDescriptor(Graphics.FONT_LARGE, 10, 17),
+        Graphics.FONT_SYSTEM_NUMBER_MILD => new FontDescriptor(Graphics.FONT_SYSTEM_NUMBER_MILD, 0, 0),
+        Graphics.FONT_SYSTEM_NUMBER_MEDIUM => new FontDescriptor(Graphics.FONT_SYSTEM_NUMBER_MEDIUM, 2, 0),
+        Graphics.FONT_SYSTEM_NUMBER_HOT => new FontDescriptor(Graphics.FONT_SYSTEM_NUMBER_HOT, 2, 0),
+        Graphics.FONT_SYSTEM_NUMBER_THAI_HOT => new FontDescriptor(Graphics.FONT_SYSTEM_NUMBER_THAI_HOT, 4, 0),
     };
 
     function initialize()
@@ -113,23 +113,21 @@ class TorqueView extends WatchUi.DataField
         averagingCount = Properties.getValue("averagingTime") as Number;
         torqueSamples = new Array<Numeric>[averagingCount];
 
-        labelInfo = new ValueInfo(FontInfos.get(Graphics.FONT_SMALL));
-        valueInfo = new ValueInfo(FontInfos.get(Graphics.FONT_SMALL));
-        unit1Info = new ValueInfo(FontInfos.get(Graphics.FONT_SMALL));
-        unit2Info = new ValueInfo(FontInfos.get(Graphics.FONT_SMALL));
+        labelInfo = new ValueInfo(FontInfo.get(Graphics.FONT_SMALL));
+        valueInfo = new ValueInfo(FontInfo.get(Graphics.FONT_SMALL));
+        unit1Info = new ValueInfo(FontInfo.get(Graphics.FONT_SMALL));
+        unit2Info = new ValueInfo(FontInfo.get(Graphics.FONT_SMALL));
         
         var font = Application.loadResource(Rez.Fonts.RobotoSmall);
-        FontInfos[UNIT_FONT_TINY] = new FontInfo(font, 6, 9, 5);
+        FontInfo[UNIT_FONT_TINY] = new FontDescriptor(font, 6, 9);
 
         font = Application.loadResource(Rez.Fonts.RobotoMedium);
-        FontInfos[UNIT_FONT_MEDIUM] = new FontInfo(font, 7, 13, 7);
+        FontInfo[UNIT_FONT_MEDIUM] = new FontDescriptor(font, 7, 13);
 
         font = Application.loadResource(Rez.Fonts.RobotoLarge);
-        FontInfos[UNIT_FONT_LARGE] = new FontInfo(font, 8, 16, 10);
+        FontInfo[UNIT_FONT_LARGE] = new FontDescriptor(font, 8, 16);
 
-        //labelInfo = new ValueInfo(FontInfos.get(UNIT_FONT_LARGE));
-
-        //unitSmallImage = Application.loadResource( Rez.Drawables.UnitSmall ) as BitmapResource;
+        //labelInfo = new ValueInfo(FontInfo.get(UNIT_FONT_LARGE));
     }
 
     // Set your layout here. Anytime the size of obscurity of
@@ -151,9 +149,9 @@ class TorqueView extends WatchUi.DataField
 
         if (height > 110)
         {
-            valueInfo.setFontInfo(FontInfos.get(Graphics.FONT_SYSTEM_NUMBER_THAI_HOT), dc);
-            unit1Info.setFontInfo(FontInfos.get(UNIT_FONT_LARGE), dc);
-            unit2Info.setFontInfo(FontInfos.get(UNIT_FONT_LARGE), dc);
+            valueInfo.setFontInfo(FontInfo.get(Graphics.FONT_SYSTEM_NUMBER_THAI_HOT), dc);
+            unit1Info.setFontInfo(FontInfo.get(UNIT_FONT_LARGE), dc);
+            unit2Info.setFontInfo(FontInfo.get(UNIT_FONT_LARGE), dc);
         }
         else
         {
@@ -161,15 +159,15 @@ class TorqueView extends WatchUi.DataField
              
             if (width > 200)
             {
-                valueInfo.setFontInfo(FontInfos.get(Graphics.FONT_SYSTEM_NUMBER_HOT), dc);
-                unit1Info.setFontInfo(FontInfos.get(UNIT_FONT_MEDIUM), dc);
-                unit2Info.setFontInfo(FontInfos.get(UNIT_FONT_MEDIUM), dc);
+                valueInfo.setFontInfo(FontInfo.get(Graphics.FONT_SYSTEM_NUMBER_HOT), dc);
+                unit1Info.setFontInfo(FontInfo.get(UNIT_FONT_MEDIUM), dc);
+                unit2Info.setFontInfo(FontInfo.get(UNIT_FONT_MEDIUM), dc);
             }
             else
             {
-                valueInfo.setFontInfo(FontInfos.get(Graphics.FONT_SYSTEM_NUMBER_MEDIUM), dc);
-                unit1Info.setFontInfo(FontInfos.get(UNIT_FONT_TINY), dc);
-                unit2Info.setFontInfo(FontInfos.get(UNIT_FONT_TINY), dc);
+                valueInfo.setFontInfo(FontInfo.get(Graphics.FONT_SYSTEM_NUMBER_MEDIUM), dc);
+                unit1Info.setFontInfo(FontInfo.get(UNIT_FONT_TINY), dc);
+                unit2Info.setFontInfo(FontInfo.get(UNIT_FONT_TINY), dc);
             }
         }
     }
@@ -180,8 +178,8 @@ class TorqueView extends WatchUi.DataField
     // guarantee that compute() will be called before onUpdate().
     function compute(info as Activity.Info) as Void
     {
-        //simulateData();
-        //return;
+        simulateData();
+        return;
 
         if (info has :currentCadence 
             && info has :currentPower
@@ -193,7 +191,7 @@ class TorqueView extends WatchUi.DataField
         else
         {
             resetAverageTorque();
-            valueInfo.setValue("--");
+            valueInfo.setValue("__");
         }
     }
 
@@ -280,30 +278,30 @@ class TorqueView extends WatchUi.DataField
         unit2Info.calcDimensions(dc);
 
         //dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        //var y = labelInfo.FontInfos.WinAscent;
+        //var y = labelInfo.FontInfo.Ascent;
         //dc.drawLine(0, y, width, y);
-        //y = labelInfo.FontInfos.XHeight;
+        //y = labelInfo.FontInfo.XHeight;
         //dc.drawLine(0, y, width, y);
-        //y = labelInfo.Height - labelInfo.FontInfos.Descent;
+        //y = labelInfo.Height - labelInfo.FontInfo.Descent;
         //dc.drawLine(0, y, width, y);
     
         dc.setColor(foregroundColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText((width - labelInfo.Width) / 2, 0, labelInfo.FontInfos.Font, labelInfo.Value, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText((width - labelInfo.Width) / 2, 0, labelInfo.FontInfo.Font, labelInfo.Value, Graphics.TEXT_JUSTIFY_LEFT);
 
         ///////////
         // calculate value data
     
         // test lines
-        //var metric42 = FontInfos.get(labelFont);
+        //var metric42 = FontInfo.get(labelFont);
         //dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
         //dc.drawLine(0, metric42.XHeight, width, metric42.XHeight);
         //dc.setColor(foregroundColor, Graphics.COLOR_TRANSPARENT);
         // Ende
 
-        var valueWinAscent = valueInfo.FontInfos.WinAscent;
+        var valueAscent = valueInfo.FontInfo.Ascent;
         
-        var labelHeightNetto = labelInfo.getUppercaseHeight() + labelInfo.FontInfos.WinAscent;
-        var valueHeightNetto = valueInfo.getUppercaseHeight();
+        var labelHeightNetto = labelInfo.FontInfo.UppercaseHeight + labelInfo.FontInfo.Ascent;
+        var valueHeightNetto = valueInfo.FontInfo.UppercaseHeight;
 
         var gap = (height - labelHeightNetto - valueHeightNetto) / 2;
         var yTop = labelHeightNetto + gap + 3;
@@ -320,13 +318,13 @@ class TorqueView extends WatchUi.DataField
         /////////////
         // calculate unit data
 
-        var unitWinAscent = unit1Info.FontInfos.WinAscent;
-        var unitHeightNetto1 = unit1Info.getUppercaseHeight();
-        var unitHeightNetto2 = unit1Info.getLowercaseHeight();
+        var unitAscent = unit1Info.FontInfo.Ascent;
+        var unitHeightNetto1 = unit1Info.FontInfo.UppercaseHeight;
+        var unitHeightNetto2 = unit1Info.FontInfo.LowercaseHeight;
 
         var unitWidth = unit1Info.Width > unit2Info.Width ? unit1Info.Width : unit2Info.Width;
 
-        var unitSumHeight = unitHeightNetto1 + unitHeightNetto2 + unitWinAscent;
+        var unitSumHeight = unitHeightNetto1 + unitHeightNetto2 + unitAscent;
         var heightGap = (valueHeightNetto - unitSumHeight);
         var unitY = yTop + heightGap;
 
@@ -343,7 +341,7 @@ class TorqueView extends WatchUi.DataField
         var valueUnitGapX = 2;
 
         var horzGap = (width - valueInfo.Width - unitWidth  + valueUnitGapX) / 2;
-        dc.drawText(horzGap, yTop - valueWinAscent, valueInfo.FontInfos.Font, valueInfo.Value, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(horzGap, yTop - valueAscent, valueInfo.FontInfo.Font, valueInfo.Value, Graphics.TEXT_JUSTIFY_LEFT);
 
         /////////////
         // draw unit
@@ -351,9 +349,7 @@ class TorqueView extends WatchUi.DataField
         var unitX = horzGap + valueInfo.Width + valueUnitGapX;
 
         // it looks better when moving the chars 1 pixel up/down
-        dc.drawText(unitX, yTop - unit1Info.FontInfos.WinAscent + 1, unit1Info.FontInfos.Font, unit1Info.Value, Graphics.TEXT_JUSTIFY_LEFT);
-        // it looks better when moving this char 1 pixel up
-        dc.drawText(unitX, unitY + unitHeightNetto1 - unit2Info.FontInfos.XHeight + unitWinAscent - 1, unit2Info.FontInfos.Font, unit2Info.Value, Graphics.TEXT_JUSTIFY_LEFT);
-        //dc.drawBitmap(unitX,  yTop, unitSmallImage);
+        dc.drawText(unitX, yTop - unit1Info.FontInfo.Ascent + 1, unit1Info.FontInfo.Font, unit1Info.Value, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(unitX, unitY + unitHeightNetto1 - unit2Info.FontInfo.XHeight + unitAscent - 1, unit2Info.FontInfo.Font, unit2Info.Value, Graphics.TEXT_JUSTIFY_LEFT);
     }
 }
