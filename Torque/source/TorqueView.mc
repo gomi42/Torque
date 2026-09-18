@@ -87,7 +87,7 @@ class TorqueView extends WatchUi.DataField
 
     var unitSmallImage;
 
-    private const  UNIT_FONT_TINY = 1000;
+    private const  UNIT_FONT_SMALL = 1000;
     private const  UNIT_FONT_MEDIUM = 1001;
     private const  UNIT_FONT_LARGE = 1002;
 
@@ -119,7 +119,7 @@ class TorqueView extends WatchUi.DataField
         unit2Info = new ValueInfo(FontInfo.get(Graphics.FONT_SMALL));
         
         var font = Application.loadResource(Rez.Fonts.RobotoSmall);
-        FontInfo[UNIT_FONT_TINY] = new FontDescriptor(font, 6, 9);
+        FontInfo[UNIT_FONT_SMALL] = new FontDescriptor(font, 6, 9);
 
         font = Application.loadResource(Rez.Fonts.RobotoMedium);
         FontInfo[UNIT_FONT_MEDIUM] = new FontDescriptor(font, 7, 13);
@@ -166,8 +166,8 @@ class TorqueView extends WatchUi.DataField
             else
             {
                 valueInfo.setFontInfo(FontInfo.get(Graphics.FONT_SYSTEM_NUMBER_MEDIUM), dc);
-                unit1Info.setFontInfo(FontInfo.get(UNIT_FONT_TINY), dc);
-                unit2Info.setFontInfo(FontInfo.get(UNIT_FONT_TINY), dc);
+                unit1Info.setFontInfo(FontInfo.get(UNIT_FONT_SMALL), dc);
+                unit2Info.setFontInfo(FontInfo.get(UNIT_FONT_SMALL), dc);
             }
         }
     }
