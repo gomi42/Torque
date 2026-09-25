@@ -1,0 +1,6 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <font id="UnitFontSmall" filename="RobotoSmall.fnt" filter="Nm"  antialias="true" />
+    <font id="UnitFontMedium" filename="RobotoMedium.fnt" filter="Nm" antialias="true" />
+    <font id="UnitFontLarge" filename="RobotoLarge.fnt" filter="Nm" antialias="true" />
+</resources>

@@ -1,0 +1,5 @@
+<settings>
+    <setting propertyKey="@Properties.averagingTime" title="@Strings.AveragingTime">
+        <settingConfig type="numeric" min="1" max="10" />
+    </setting>
+</settings>
