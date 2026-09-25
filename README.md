@@ -12,7 +12,7 @@ The torque data field supports English, German, French and Spanish.
 ## Implementation Details
 ### Font Metric
 
-The Garmin API delivers some very rudimentary font metric data. They turned out not to be correct for all fonts and incomplete. In order to position text correcly the data must be pixel perfect and more data are needed. The data of each font were determined experimentally on an Garmin 1030Plus device. That's why the data field is bound to that device.
+The Garmin API delivers some very rudimentary font metric data. They turned out not to be correct for all fonts and to be incomplete. In order to position text correcly the data must be pixel perfect and more data are needed. The data of each font were determined experimentally on an Garmin 1030Plus device. That's why the data field is bound to that device.
 
 ![intro](Images/Typography.jpg)
 
