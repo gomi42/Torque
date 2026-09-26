@@ -18,3 +18,6 @@ The Garmin API delivers some very rudimentary font metric data. They turned out 
 
 ### Garmin Unit Font Emulation
 Garmin unfortunately doesn't expose the fonts they use for the units in the API. Special care has been taken to simulate the unit fonts as good as possible. The characters were manually edited to match the Garmin fonts. 
+
+### Release
+The latest release is available in the Garmin Connect IQ™ Store: [Torque Data Field](https://apps.garmin.com/en-US/apps/10c7de4b-1b6d-429f-b1f8-93c6e3e2efdb)
